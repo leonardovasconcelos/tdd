@@ -2,8 +2,8 @@ import 'package:faker/faker.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
-import 'package:tdd/domain/usecases/usecases.dart';
 import 'package:tdd/domain/helpers/helpers.dart';
+import 'package:tdd/domain/usecases/usecases.dart';
 
 import 'package:tdd/data/usecases/usecases.dart';
 import 'package:tdd/data/http/http.dart';
@@ -100,5 +100,19 @@ void main() {
     final account = await sut.auth(params);
 
     expect(account.token, accessToken);
+  });
+
+  test(
+      'Should throw UnexpectedError if HttpClient returns 200 with invalid data',
+      () async {
+    when(httpClient.request(
+            url: anyNamed('url'),
+            method: anyNamed('method'),
+            body: anyNamed('body')))
+        .thenAnswer((_) async => {'invalid_key': 'invalid_value'});
+
+    final future = sut.auth(params);
+
+    expect(future, throwsA(DomainError.unexpected));
   });
 }
