@@ -3,6 +3,7 @@ import 'package:mockito/mockito.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tdd/presentation/protocols/validation.dart';
 
+import 'package:tdd/domain/entities/entities.dart';
 import 'package:tdd/domain/usecases/authentication.dart';
 
 import 'package:tdd/presentation/presenters/presenters.dart';
@@ -27,6 +28,13 @@ void main() {
     mockValidationCall(field).thenReturn(value);
   }
 
+  PostExpectation mockAuthenticationCall() => when(authentication.auth(any));
+
+  void mockAuthentication() {
+    mockAuthenticationCall()
+        .thenAnswer((_) async => AccountEntity(faker.guid.guid()));
+  }
+
   setUp(() {
     validation = ValidationSpy();
     authentication = AuthenticationSpy();
@@ -35,6 +43,7 @@ void main() {
     email = faker.internet.email();
     password = faker.internet.email();
     mockValidation();
+    mockAuthentication();
   });
   test('Shold call Validation with correct email', () {
     sut.validateEmail(email);
@@ -124,5 +133,14 @@ void main() {
     verify(authentication
             .auth(AuthenticationParams(email: email, secret: password)))
         .called(1);
+  });
+
+  test('Shold emit correct events on Authentication success', () async {
+    sut.validateEmail(email);
+    sut.validatePassword(password);
+
+    expectLater(sut.isLoadingStream, emitsInOrder([true, false]));
+
+    await sut.auth();
   });
 }
